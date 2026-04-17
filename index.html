@@ -1,0 +1,215 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spectral Orbit - Audio to Sheet Music</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <div id="app">
+    <header id="header">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#grad)" stroke-width="2">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#646cff" />
+              <stop offset="100%" style="stop-color:#a78bfa" />
+            </linearGradient>
+          </defs>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+        </svg>
+        <span>Spectral Orbit</span>
+      </div>
+      <div class="status-badge" id="status-badge">
+        <span class="status-dot"></span>
+        <span id="status-text">Ready</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-text">
+        <h1>Turn any sound into sheet music.</h1>
+        <p class="hero-subtitle">
+          Spectral Orbit uses AI to listen to your audio, whether that is humming, guitar, singing, or piano,
+          and turns it into readable musical notes for early alpha testing.
+        </p>
+      </div>
+      <div class="steps-row">
+        <div class="step-card">
+          <div class="step-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+            </svg>
+          </div>
+          <div class="step-label">1 - Upload or Record</div>
+          <p>Use a file or your microphone to capture a phrase, riff, melody, or quick vocal test.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
+          <div class="step-label">2 - AI Listens</div>
+          <p>The transcription model analyzes note onsets, durations, and pitch ranges for the chosen instrument.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+          </div>
+          <div class="step-label">3 - Review the Notes</div>
+          <p>Read the generated staff, compare it with what you played, and save feedback for the alpha loop.</p>
+        </div>
+      </div>
+    </section>
+
+    <main id="main-content">
+      <aside class="controls-panel">
+        <section class="control-section">
+          <h3>Audio Source</h3>
+          <button id="btn-upload" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Upload Audio File
+          </button>
+          <button id="btn-record" class="btn btn-primary">
+            <svg id="mic-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+              <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
+            <span id="record-label">Record Audio</span>
+          </button>
+          <input type="file" id="file-input" accept=".mp3,.wav,.ogg,.m4a,audio/*" hidden>
+        </section>
+
+        <section class="control-section">
+          <h3>Instrument Type</h3>
+          <select id="instrument-select" class="select-input">
+            <option value="general">General / Auto</option>
+            <option value="piano">Piano</option>
+            <option value="voice">Voice / Singing</option>
+            <option value="guitar">Guitar</option>
+            <option value="violin">Violin / Strings</option>
+            <option value="flute">Flute / Woodwinds</option>
+            <option value="bass">Bass</option>
+          </select>
+          <p class="hint-text">Helps the AI focus on the right frequency range and note patterns.</p>
+        </section>
+
+        <section class="control-section" id="file-info-section" style="display:none;">
+          <h3>Loaded File</h3>
+          <p id="file-name" class="file-name-text">-</p>
+          <button id="btn-transcribe" class="btn btn-accent">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Transcribe
+          </button>
+        </section>
+
+        <section class="control-section" id="progress-section" style="display:none;">
+          <h3>Processing</h3>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+          <p class="progress-text" id="progress-text">0%</p>
+        </section>
+      </aside>
+
+      <div class="score-panel">
+        <div class="score-header">
+          <h2>Sheet Music</h2>
+          <button id="btn-download" class="btn btn-small btn-secondary" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download PNG
+          </button>
+        </div>
+        <div id="score-output" class="score-area">
+          <div class="placeholder" id="placeholder">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+              opacity="0.3">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+            <p>Upload an audio file or record from your microphone<br>to generate sheet music.</p>
+          </div>
+        </div>
+
+        <section id="feedback-section" class="feedback-panel" hidden>
+          <div class="feedback-header">
+            <div>
+              <h3>Alpha feedback</h3>
+              <p id="feedback-summary" class="feedback-summary">
+                Review the generated notes, then tell us how accurate they felt.
+              </p>
+            </div>
+            <p id="feedback-scope" class="feedback-scope">Saved on this device only.</p>
+          </div>
+
+          <label class="feedback-label" for="feedback-accuracy">How accurate was this transcription?</label>
+          <select id="feedback-accuracy" class="select-input">
+            <option value="">Choose a rating</option>
+            <option value="accurate">Mostly correct</option>
+            <option value="mixed">Partly correct</option>
+            <option value="incorrect">Mostly incorrect</option>
+          </select>
+
+          <fieldset class="feedback-issues">
+            <legend>What needs work?</legend>
+            <div class="feedback-tags">
+              <label class="feedback-check"><input type="checkbox" name="feedback-issues" value="wrong-pitches">Wrong pitches</label>
+              <label class="feedback-check"><input type="checkbox" name="feedback-issues" value="wrong-rhythm">Wrong rhythm</label>
+              <label class="feedback-check"><input type="checkbox" name="feedback-issues" value="missing-notes">Missing notes</label>
+              <label class="feedback-check"><input type="checkbox" name="feedback-issues" value="extra-notes">Extra notes</label>
+              <label class="feedback-check"><input type="checkbox" name="feedback-issues" value="hard-to-read">Hard to read</label>
+            </div>
+          </fieldset>
+
+          <label class="feedback-label" for="feedback-notes">Extra detail for the team</label>
+          <textarea id="feedback-notes" class="feedback-textarea"
+            placeholder="Example: the melody was right, but the chord tones and rests drifted after bar 4."></textarea>
+
+          <div class="feedback-actions">
+            <button id="btn-feedback-submit" type="button" class="btn btn-primary">Save Feedback</button>
+            <p id="feedback-save-status" class="feedback-save-status"></p>
+          </div>
+
+          <div class="feedback-history">
+            <h4>Saved feedback on this device</h4>
+            <div id="feedback-list" class="feedback-list"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
