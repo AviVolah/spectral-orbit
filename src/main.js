@@ -2,6 +2,7 @@
 import { AudioEngine } from './audio-engine.js';
 import { createFeedbackStore } from './feedback-store.js';
 import { ScoreRenderer } from './score-renderer.js';
+import { exportMidi } from './midi-export.js';
 
 const engine = new AudioEngine();
 const feedbackStore = createFeedbackStore();
@@ -13,6 +14,7 @@ const recordLabel = document.getElementById('record-label');
 const fileInput = document.getElementById('file-input');
 const btnTranscribe = document.getElementById('btn-transcribe');
 const btnDownload = document.getElementById('btn-download');
+const btnMidi = document.getElementById('btn-midi');
 const fileInfoSection = document.getElementById('file-info-section');
 const fileNameEl = document.getElementById('file-name');
 const progressSection = document.getElementById('progress-section');
@@ -121,6 +123,8 @@ function resetFeedbackInputs() {
 function clearFeedbackState() {
   latestRawNotes = null;
   latestTranscription = null;
+  btnMidi.style.display = 'none';
+  btnDownload.style.display = 'none';
   feedbackSection.hidden = true;
   feedbackSaveStatus.textContent = '';
   resetFeedbackInputs();
@@ -355,7 +359,8 @@ async function runTranscription(audioBuffer) {
     updateFeedbackPanel(latestTranscription);
     renderFeedbackList();
     setStatus(`Done - ${notes.length} notes`);
-    btnDownload.style.display = 'inline-flex';
+    btnDownload.style.display = notes.length ? 'inline-flex' : 'none';
+    btnMidi.style.display = notes.length ? 'inline-flex' : 'none';
   } catch (error) {
     console.error('Transcription error:', error);
     alert(`Transcription failed: ${error.message}`);
@@ -368,6 +373,21 @@ async function runTranscription(audioBuffer) {
     btnFeedbackSubmit.disabled = false;
   }
 }
+
+btnMidi.addEventListener('click', () => {
+  if (!latestRawNotes?.length) return;
+  const selectedTempo = Number(tempoInput.value);
+  const bpm = selectedTempo >= 40 && selectedTempo <= 240
+    ? selectedTempo : latestTranscription?.bpm ?? 120;
+  const bytes = exportMidi(latestRawNotes, bpm, Number(meterSelect.value));
+  const blob = new Blob([bytes], { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'spectral-orbit-transcription.mid';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
 
 btnDownload.addEventListener('click', () => {
   const svg = scoreOutput.querySelector('svg');
