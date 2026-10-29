@@ -23,6 +23,8 @@ const statusText = document.getElementById('status-text');
 const placeholder = document.getElementById('placeholder');
 const scoreOutput = document.getElementById('score-output');
 const instrumentSelect = document.getElementById('instrument-select');
+const tempoInput = document.getElementById('tempo-input');
+const meterSelect = document.getElementById('meter-select');
 const feedbackSection = document.getElementById('feedback-section');
 const feedbackSummary = document.getElementById('feedback-summary');
 const feedbackScope = document.getElementById('feedback-scope');
@@ -39,6 +41,7 @@ let pendingSource = {
   label: '',
 };
 let latestTranscription = null;
+let latestRawNotes = null;
 
 function setStatus(text, mode = '') {
   statusText.textContent = text;
@@ -116,6 +119,7 @@ function resetFeedbackInputs() {
 }
 
 function clearFeedbackState() {
+  latestRawNotes = null;
   latestTranscription = null;
   feedbackSection.hidden = true;
   feedbackSaveStatus.textContent = '';
@@ -330,7 +334,11 @@ async function runTranscription(audioBuffer) {
       placeholder.style.display = 'none';
     }
 
-    const renderSummary = scoreRenderer.render(notes);
+    latestRawNotes = notes;
+    const renderSummary = scoreRenderer.render(notes, {
+      bpm: Number(tempoInput.value) || undefined,
+      beatsPerBar: Number(meterSelect.value),
+    });
     latestTranscription = {
       createdAt: new Date().toISOString(),
       sourceType: pendingSource.type || 'unknown',
@@ -392,6 +400,31 @@ btnDownload.addEventListener('click', () => {
 
   image.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`;
 });
+
+
+// Re-quantize from the same AI note events when timing controls change.
+// No expensive model inference is needed to fix a mistaken auto-tempo.
+function rerenderNotation() {
+  if (!latestRawNotes) return;
+  try {
+    const summary = scoreRenderer.render(latestRawNotes, {
+      bpm: Number(tempoInput.value) || undefined,
+      beatsPerBar: Number(meterSelect.value),
+    });
+    if (latestTranscription) {
+      latestTranscription.bpm = summary?.bpm ?? null;
+      latestTranscription.measuresCount = summary?.measuresCount ?? 0;
+      updateFeedbackPanel(latestTranscription);
+    }
+    setStatus('Notation updated');
+  } catch (error) {
+    console.error('Notation update failed:', error);
+    setStatus('Notation error');
+  }
+}
+
+tempoInput.addEventListener('change', rerenderNotation);
+meterSelect.addEventListener('change', rerenderNotation);
 
 btnFeedbackSubmit.addEventListener('click', submitFeedback);
 renderFeedbackList();
