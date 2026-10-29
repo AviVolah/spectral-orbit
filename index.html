@@ -37,7 +37,7 @@
 
     <section class="hero">
       <div class="hero-text">
-        <h1>Turn any sound into sheet music.</h1>
+        <h1>Turn clearer recordings into sheet music.</h1>
         <p class="hero-subtitle">
           Spectral Orbit uses AI to listen to your audio, whether that is humming, guitar, singing, or piano,
           and turns it into readable musical notes for early alpha testing.
@@ -118,6 +118,19 @@
           <p class="hint-text">Helps the AI focus on the right frequency range and note patterns.</p>
         </section>
 
+        <section class="control-section">
+          <h3>Notation &amp; Timing</h3>
+          <label for="tempo-input">Tempo (BPM)</label>
+          <input id="tempo-input" class="select-input" type="number" min="40" max="240" step="1" placeholder="Auto (estimated)" aria-describedby="tempo-hint">
+          <p class="hint-text" id="tempo-hint">Enter the recording's real tempo when known. Auto is only an estimate.</p>
+          <label for="meter-select">Time signature</label>
+          <select id="meter-select" class="select-input">
+            <option value="4">4/4</option>
+            <option value="3">3/4</option>
+          </select>
+          <p class="hint-text">Changing either value re-draws the last transcription without re-running AI.</p>
+        </section>
+
         <section class="control-section" id="file-info-section" style="display:none;">
           <h3>Loaded File</h3>
           <p id="file-name" class="file-name-text">-</p>
@@ -149,6 +162,7 @@
             </svg>
             Download PNG
           </button>
+          <button id="btn-midi" class="btn btn-small btn-secondary" type="button" style="display:none;" title="Open detected notes in a MIDI editor to correct mistakes">Download MIDI</button>
         </div>
         <div id="score-output" class="score-area">
           <div class="placeholder" id="placeholder">

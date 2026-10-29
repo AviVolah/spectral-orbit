@@ -2,6 +2,7 @@
 import { AudioEngine } from './audio-engine.js';
 import { createFeedbackStore } from './feedback-store.js';
 import { ScoreRenderer } from './score-renderer.js';
+import { exportMidi } from './midi-export.js';
 
 const engine = new AudioEngine();
 const feedbackStore = createFeedbackStore();
@@ -13,6 +14,7 @@ const recordLabel = document.getElementById('record-label');
 const fileInput = document.getElementById('file-input');
 const btnTranscribe = document.getElementById('btn-transcribe');
 const btnDownload = document.getElementById('btn-download');
+const btnMidi = document.getElementById('btn-midi');
 const fileInfoSection = document.getElementById('file-info-section');
 const fileNameEl = document.getElementById('file-name');
 const progressSection = document.getElementById('progress-section');
@@ -23,6 +25,8 @@ const statusText = document.getElementById('status-text');
 const placeholder = document.getElementById('placeholder');
 const scoreOutput = document.getElementById('score-output');
 const instrumentSelect = document.getElementById('instrument-select');
+const tempoInput = document.getElementById('tempo-input');
+const meterSelect = document.getElementById('meter-select');
 const feedbackSection = document.getElementById('feedback-section');
 const feedbackSummary = document.getElementById('feedback-summary');
 const feedbackScope = document.getElementById('feedback-scope');
@@ -39,6 +43,7 @@ let pendingSource = {
   label: '',
 };
 let latestTranscription = null;
+let latestRawNotes = null;
 
 function setStatus(text, mode = '') {
   statusText.textContent = text;
@@ -116,7 +121,10 @@ function resetFeedbackInputs() {
 }
 
 function clearFeedbackState() {
+  latestRawNotes = null;
   latestTranscription = null;
+  btnMidi.style.display = 'none';
+  btnDownload.style.display = 'none';
   feedbackSection.hidden = true;
   feedbackSaveStatus.textContent = '';
   resetFeedbackInputs();
@@ -330,7 +338,11 @@ async function runTranscription(audioBuffer) {
       placeholder.style.display = 'none';
     }
 
-    const renderSummary = scoreRenderer.render(notes);
+    latestRawNotes = notes;
+    const renderSummary = scoreRenderer.render(notes, {
+      bpm: Number(tempoInput.value) || undefined,
+      beatsPerBar: Number(meterSelect.value),
+    });
     latestTranscription = {
       createdAt: new Date().toISOString(),
       sourceType: pendingSource.type || 'unknown',
@@ -347,7 +359,8 @@ async function runTranscription(audioBuffer) {
     updateFeedbackPanel(latestTranscription);
     renderFeedbackList();
     setStatus(`Done - ${notes.length} notes`);
-    btnDownload.style.display = 'inline-flex';
+    btnDownload.style.display = notes.length ? 'inline-flex' : 'none';
+    btnMidi.style.display = notes.length ? 'inline-flex' : 'none';
   } catch (error) {
     console.error('Transcription error:', error);
     alert(`Transcription failed: ${error.message}`);
@@ -360,6 +373,21 @@ async function runTranscription(audioBuffer) {
     btnFeedbackSubmit.disabled = false;
   }
 }
+
+btnMidi.addEventListener('click', () => {
+  if (!latestRawNotes?.length) return;
+  const selectedTempo = Number(tempoInput.value);
+  const bpm = selectedTempo >= 40 && selectedTempo <= 240
+    ? selectedTempo : latestTranscription?.bpm ?? 120;
+  const bytes = exportMidi(latestRawNotes, bpm, Number(meterSelect.value));
+  const blob = new Blob([bytes], { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'spectral-orbit-transcription.mid';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
 
 btnDownload.addEventListener('click', () => {
   const svg = scoreOutput.querySelector('svg');
@@ -392,6 +420,31 @@ btnDownload.addEventListener('click', () => {
 
   image.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`;
 });
+
+
+// Re-quantize from the same AI note events when timing controls change.
+// No expensive model inference is needed to fix a mistaken auto-tempo.
+function rerenderNotation() {
+  if (!latestRawNotes) return;
+  try {
+    const summary = scoreRenderer.render(latestRawNotes, {
+      bpm: Number(tempoInput.value) || undefined,
+      beatsPerBar: Number(meterSelect.value),
+    });
+    if (latestTranscription) {
+      latestTranscription.bpm = summary?.bpm ?? null;
+      latestTranscription.measuresCount = summary?.measuresCount ?? 0;
+      updateFeedbackPanel(latestTranscription);
+    }
+    setStatus('Notation updated');
+  } catch (error) {
+    console.error('Notation update failed:', error);
+    setStatus('Notation error');
+  }
+}
+
+tempoInput.addEventListener('change', rerenderNotation);
+meterSelect.addEventListener('change', rerenderNotation);
 
 btnFeedbackSubmit.addEventListener('click', submitFeedback);
 renderFeedbackList();

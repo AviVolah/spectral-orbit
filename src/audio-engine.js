@@ -1,4 +1,4 @@
-﻿import { BasicPitch, noteFramesToTime, outputToNotesPoly, addPitchBendsToNoteEvents } from '@spotify/basic-pitch';
+﻿// Basic Pitch is loaded only when the user starts transcription.
 
 const BASIC_PITCH_SAMPLE_RATE = 22050;
 
@@ -167,6 +167,9 @@ export class AudioEngine {
         onProgress(progressValue, stage);
       }
     };
+
+    const { BasicPitch, noteFramesToTime, outputToNotesPoly, addPitchBendsToNoteEvents } =
+      await import('@spotify/basic-pitch');
 
     report(0, 'Resampling audio...');
     const monoData = await this.resampleTo22050Mono(audioBuffer);
