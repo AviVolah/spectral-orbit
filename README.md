@@ -8,6 +8,8 @@ Browser-based experimental **audio to sheet music** transcription.
 - Score planning quantizes the AI output to 16th-note ticks, preserves independent overlapping
   notes in separate displayed voices, splits notes at barlines, and adds ties.
 - VexFlow draws musical notation; the score can be exported as PNG.
+- Export the displayed notation as PNG or download **detected MIDI** for correction in
+  a notation editor or DAW. MIDI preserves the AI event timing rather than the display quantization.
 - Alpha feedback is stored locally, with an optional shared feedback API.
 
 ## Limits
